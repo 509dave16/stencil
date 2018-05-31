@@ -146,6 +146,39 @@ declare global {
 declare global {
 
   namespace StencilComponents {
+    interface AttributeHost {
+
+    }
+  }
+
+  interface HTMLAttributeHostElement extends StencilComponents.AttributeHost, HTMLStencilElement {}
+
+  var HTMLAttributeHostElement: {
+    prototype: HTMLAttributeHostElement;
+    new (): HTMLAttributeHostElement;
+  };
+  interface HTMLElementTagNameMap {
+    'attribute-host': HTMLAttributeHostElement;
+  }
+  interface ElementTagNameMap {
+    'attribute-host': HTMLAttributeHostElement;
+  }
+  namespace JSX {
+    interface IntrinsicElements {
+      'attribute-host': JSXElements.AttributeHostAttributes;
+    }
+  }
+  namespace JSXElements {
+    export interface AttributeHostAttributes extends HTMLAttributes {
+
+    }
+  }
+}
+
+
+declare global {
+
+  namespace StencilComponents {
     interface ConditionalBasic {
 
     }
