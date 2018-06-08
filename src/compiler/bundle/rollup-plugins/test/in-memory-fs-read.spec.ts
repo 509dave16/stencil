@@ -8,7 +8,7 @@ describe('inMemoryFsRead', () => {
   const config = mockConfig();
   const path = config.sys.path;
   let compierCtx: d.CompilerCtx;
-  let plugin = inMemoryFsRead(config, path, compierCtx);
+  let plugin = inMemoryFsRead(config, compierCtx);
 
   beforeEach(() => {
     compierCtx = mockCompilerCtx();
@@ -21,7 +21,7 @@ describe('inMemoryFsRead', () => {
         jsFilePath: '/dist/file/index.js'
       }
     };
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
     const importee = '/dist/file';
     const importer = null;
     const id = await plugin.resolveId(importee, importer);
@@ -34,7 +34,7 @@ describe('inMemoryFsRead', () => {
         jsFilePath: '/dist/file.js'
       }
     };
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
     const importee = '/dist/file';
     const importer = null;
     const id = await plugin.resolveId(importee, importer);
@@ -47,7 +47,7 @@ describe('inMemoryFsRead', () => {
         jsFilePath: '/dist/file.js'
       }
     };
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
     const importee = '/dist/file.js';
     const importer = null;
     const id = await plugin.resolveId(importee, importer);
@@ -60,7 +60,7 @@ describe('inMemoryFsRead', () => {
         jsFilePath: '/dist/file.js'
       }
     };
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
     const importee = '/src/file.ts';
     const importer = null;
     const id = await plugin.resolveId(importee, importer);
@@ -73,7 +73,7 @@ describe('inMemoryFsRead', () => {
         jsFilePath: '/dist/file.js'
       }
     };
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
     const importee = '/src/file.ts';
     const importer = null;
     const id = await plugin.resolveId(importee, importer);
@@ -96,7 +96,7 @@ describe('inMemoryFsRead', () => {
       }
     };
 
-    plugin = inMemoryFsRead(config, path, compierCtx);
+    plugin = inMemoryFsRead(config, compierCtx);
 
     const importee = './file';
     const importer = null;

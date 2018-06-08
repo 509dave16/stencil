@@ -1,16 +1,30 @@
 import * as d from '../../declarations';
 import { attachMessageHandler } from './worker-farm/worker';
+import { BaseLogger } from '../../util/logger/base-logger';
+import { getCompilerCtx } from '../../compiler/build/compiler-ctx';
 import { normalizePath } from '../../compiler/util';
 import { ShadowCss } from '../../compiler/style/shadow-css';
+import { transpileFileWorker } from '../../compiler/transpile/transpile-file-worker';
+import { transpileProgramWorker } from '../../compiler/transpile/transpile-program-worker';
 
-const autoprefixer = require('autoprefixer');
-const CleanCSS = require('clean-css');
-const gzipSize = require('gzip-size');
-const postcss = require('postcss');
-const UglifyJS = require('uglify-es');
+import * as path from 'path';
 
 
 export class NodeSystemWorker {
+  config: d.Config;
+  compilerCtx: d.CompilerCtx;
+  sysUtil: any;
+
+  constructor(config: d.Config) {
+    this.sysUtil = require(path.join(__dirname, '..', '..', '..', 'dist', 'sys', 'node', 'node-sys-util'));
+    const nodeSysMain = require(path.join(__dirname, '..', '..', '..', 'dist', 'sys', 'node', 'node-sys-main'));
+
+    this.config = config;
+    this.config.sys = new nodeSysMain.NodeSystem();
+    this.config.logger = new WorkerLogger();
+
+    this.compilerCtx = getCompilerCtx(this.config);
+  }
 
   async autoprefixCss(input: string, opts: any) {
     if (opts == null || typeof opts !== 'object') {
@@ -26,7 +40,7 @@ export class NodeSystemWorker {
         remove: false
       };
     }
-    const prefixer = postcss([autoprefixer(opts)]);
+    const prefixer = this.sysUtil.postcss([this.sysUtil.autoprefixer(opts)]);
     const result = await prefixer.process(input, {
       map: false,
       from: undefined
@@ -35,7 +49,7 @@ export class NodeSystemWorker {
   }
 
   gzipSize(text: string) {
-    return gzipSize(text);
+    return this.sysUtil.gzipSize(text);
   }
 
   minifyCss(input: string, filePath?: string, opts: any = {}) {
@@ -52,7 +66,7 @@ export class NodeSystemWorker {
       minifyInput = input;
     }
 
-    const cleanCss = new CleanCSS(opts);
+    const cleanCss = new this.sysUtil.cleanCss(opts);
     const result = cleanCss.minify(minifyInput);
     const diagnostics: d.Diagnostic[] = [];
 
@@ -86,7 +100,7 @@ export class NodeSystemWorker {
   }
 
   minifyJs(input: string, opts?: any) {
-    const result = UglifyJS.minify(input, opts);
+    const result = this.sysUtil.uglifyEs.minify(input, opts);
     const diagnostics: d.Diagnostic[] = [];
 
     if (result.error) {
@@ -110,11 +124,33 @@ export class NodeSystemWorker {
     return sc.shimCssText(cssText, scopeAttribute, hostScopeAttr, slotScopeAttr);
   }
 
+  transpileFile(tsFilePath: string, tsSourceText: string) {
+    return transpileFileWorker(this.config, this.compilerCtx, tsFilePath, tsSourceText);
+  }
+
+  transpileProgram(tsFilePaths: string[]) {
+    return transpileProgramWorker(this.config, this.compilerCtx, tsFilePaths);
+  }
+
 }
 
 
-export function createRunner() {
-  const instance: any = new NodeSystemWorker();
+class WorkerLogger extends BaseLogger {
+  info(msg: string) {
+    throw new Error(`WorkerLogger should print info logs: ${msg}`);
+  }
+  warn(msg: string) {
+    throw new Error(`WorkerLogger should print warnings: ${msg}`);
+  }
+  error(msg: string) {
+    throw new Error(`WorkerLogger should print errors: ${msg}`);
+  }
+  debug() { /* just ignore debug logs */ }
+}
+
+
+export function createRunner(config: d.Config) {
+  const instance: any = new NodeSystemWorker(config);
 
   return (methodName: string, args: any[]) => {
     // get the method on the loaded module

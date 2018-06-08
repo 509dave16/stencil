@@ -33,6 +33,7 @@ export interface BuildCtx {
   hasSlot?: boolean;
   hasSvg?: boolean;
   finish?(): Promise<BuildResults>;
+  transpileProgramBuild?: Promise<any>;
 }
 
 
@@ -132,12 +133,6 @@ export interface FilesMap {
 
 
 export type CompilerEventName = 'fileUpdate' | 'fileAdd' | 'fileDelete' | 'dirAdd' | 'dirDelete' | 'build' | 'rebuild';
-
-export interface TranspileResults {
-  code?: string;
-  diagnostics?: d.Diagnostic[];
-  cmpMeta?: d.ComponentMeta;
-}
 
 
 export interface JSModuleList {

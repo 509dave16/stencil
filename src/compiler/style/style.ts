@@ -7,8 +7,8 @@ import { scopeComponentCss } from './scope-css';
 
 
 export async function generateStyles(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, entryModules: d.EntryModule[]) {
+  const timespan = config.logger.createTimeSpan(`generate styles started`);
 
-  config.logger.debug(`generate styles started`);
   await Promise.all(entryModules.map(async bundle => {
 
     await Promise.all(bundle.moduleFiles.map(async moduleFile => {
@@ -17,7 +17,7 @@ export async function generateStyles(config: d.Config, compilerCtx: d.CompilerCt
 
   }));
 
-  config.logger.debug(`generate styles ended`);
+  timespan.finish(`generate styles finished`);
 }
 
 

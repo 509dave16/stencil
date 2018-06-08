@@ -1,4 +1,5 @@
 import * as d from '../declarations';
+import { BaseLogger } from '../util/logger/base-logger';
 import { Cache } from '../compiler/cache';
 import { createDomApi } from '../renderer/dom-api';
 import { createPlatformServer } from '../server/platform-server';
@@ -10,7 +11,6 @@ import { InMemoryFileSystem } from '../util/in-memory-fs';
 import { TestingConfig } from './testing-config';
 import { TestingSystem } from './testing-sys';
 import { TestingFs } from './testing-fs';
-import { TestingLogger } from './testing-logger';
 import { validateConfig } from '../compiler/config/validate-config';
 
 
@@ -69,7 +69,7 @@ export interface MockedPlatform extends d.PlatformApi {
 
 export function mockConfig(opts = { enableLogger: false }): d.Config {
   const config = new TestingConfig();
-  (config.logger as TestingLogger).enable = opts.enableLogger;
+  (config.logger as BaseLogger).enable = opts.enableLogger;
   return validateConfig(config);
 }
 
@@ -117,7 +117,7 @@ export function mockFs() {
 
 
 export function mockLogger() {
-  return new TestingLogger();
+  return new BaseLogger();
 }
 
 

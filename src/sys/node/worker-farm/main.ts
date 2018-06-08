@@ -1,34 +1,33 @@
 import * as d from '../../../declarations';
-import { MessageData, Runner, Task, Worker, WorkerOptions } from './interface';
-import { cpus } from 'os';
 import { fork } from 'child_process';
 
 
 export class WorkerFarm {
-  options: WorkerOptions;
   modulePath: string;
+  config: d.Config;
   workerModule: any;
-  workers: Worker[] = [];
-  taskQueue: Task[] = [];
+  workers: d.WorkerProcess[] = [];
+  taskQueue: d.WorkerTask[] = [];
   isExisting = false;
   logger: d.Logger;
-  singleThreadRunner: Runner;
+  singleThreadRunner: d.WorkerRunner;
 
-  constructor(modulePath: string, options: WorkerOptions = {}) {
-    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+  constructor(modulePath: string, config: d.Config) {
     this.modulePath = modulePath;
+    this.config = config;
+
     this.logger = {
       error: function() {
         console.error.apply(console, arguments);
       }
     } as any;
 
-    if (this.options.maxConcurrentWorkers > 1) {
+    if (config.maxConcurrentWorkers > 1) {
       this.startWorkers();
 
     } else {
       this.workerModule = require(modulePath);
-      this.singleThreadRunner = new this.workerModule.createRunner();
+      this.singleThreadRunner = new this.workerModule.createRunner(config);
     }
   }
 
@@ -42,7 +41,7 @@ export class WorkerFarm {
     }
 
     return new Promise<any>((resolve, reject) => {
-      const task: Task = {
+      const task: d.WorkerTask = {
         methodName: methodName,
         args: args,
         isLongRunningTask: isLongRunningTask,
@@ -55,7 +54,7 @@ export class WorkerFarm {
   }
 
   startWorkers() {
-    for (let workerId = 0; workerId < this.options.maxConcurrentWorkers; workerId++) {
+    for (let workerId = 0; workerId < this.config.maxConcurrentWorkers; workerId++) {
       const worker = this.createWorker(workerId);
 
       worker.tasks = [];
@@ -68,21 +67,25 @@ export class WorkerFarm {
   }
 
   createWorker(workerId: number) {
-    const options = Object.assign({
-      env: process.env,
-      cwd: process.cwd()
-    }, this.options.forkOptions);
+    const config = Object.assign({}, this.config);
+    delete config.sys;
+    delete config.logger;
 
     const argv = [
-      '--start-worker'
+      `--config=${JSON.stringify(config)}`
     ];
+
+    const options = {
+      env: process.env,
+      cwd: __dirname,
+    };
 
     const childProcess = fork(this.modulePath, argv, options);
 
-    const worker: Worker = {
+    const worker: d.WorkerProcess = {
       workerId: workerId,
       taskIds: 0,
-      send: (msg: MessageData) => childProcess.send(msg),
+      send: (msg: d.WorkerMessageData) => childProcess.send(msg),
       kill: () => childProcess.kill('SIGKILL')
     };
 
@@ -136,7 +139,7 @@ export class WorkerFarm {
         if (worker.exitCode == null) {
           worker.kill();
         }
-      }, this.options.forcedKillTime);
+      }, 100);
 
       tmr.unref && tmr.unref();
 
@@ -147,7 +150,7 @@ export class WorkerFarm {
     }
   }
 
-  receiveMessageFromWorker(msg: MessageData) {
+  receiveMessageFromWorker(msg: d.WorkerMessageData) {
     // message sent back from a worker process
     const worker = this.workers.find(w => w.workerId === msg.workerId);
     if (!worker) {
@@ -209,7 +212,7 @@ export class WorkerFarm {
 
   processTaskQueue() {
     while (this.taskQueue.length > 0) {
-      const worker = nextAvailableWorker(this.workers, this.options.maxConcurrentTasksPerWorker);
+      const worker = nextAvailableWorker(this.workers, this.config.maxConcurrentTasksPerWorker);
       if (worker) {
         // we found a worker to send this task to
         this.send(worker, this.taskQueue.shift());
@@ -221,7 +224,7 @@ export class WorkerFarm {
     }
   }
 
-  send(worker: Worker, task: Task) {
+  send(worker: d.WorkerProcess, task: d.WorkerTask) {
     if (!worker || !task) {
       return;
     }
@@ -241,8 +244,8 @@ export class WorkerFarm {
     // no need to keep these args in memory at this point
     task.args = null;
 
-    if (this.options.maxTaskTime !== Infinity) {
-      task.timer = setTimeout(this.workerTimeout.bind(this, worker.workerId), this.options.maxTaskTime);
+    if (this.config.maxTaskTime !== Infinity) {
+      task.timer = setTimeout(this.workerTimeout.bind(this, worker.workerId), this.config.maxTaskTime);
     }
   }
 
@@ -259,7 +262,7 @@ export class WorkerFarm {
 }
 
 
-export function nextAvailableWorker(workers: Worker[], maxConcurrentTasksPerWorker: number) {
+export function nextAvailableWorker(workers: d.WorkerProcess[], maxConcurrentTasksPerWorker: number) {
   const availableWorkers = workers.filter(w => {
     if (w.tasks.length >= maxConcurrentTasksPerWorker) {
       // do not use this worker if it's at its max
@@ -297,12 +300,3 @@ export function nextAvailableWorker(workers: Worker[], maxConcurrentTasksPerWork
 
   return sorted[0];
 }
-
-
-const DEFAULT_OPTIONS: WorkerOptions = {
-  forkOptions: {},
-  maxConcurrentWorkers: (cpus() || { length: 1 }).length,
-  maxConcurrentTasksPerWorker: 5,
-  maxTaskTime: 90000,
-  forcedKillTime: 100
-};

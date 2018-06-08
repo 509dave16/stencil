@@ -1,7 +1,7 @@
-import { Diagnostic, Logger, LoggerTimeSpan } from '../declarations';
+import { Diagnostic, Logger, LoggerTimeSpan } from '../../declarations';
 
 
-export class TestingLogger implements Logger {
+export class BaseLogger implements Logger {
 
   enable = false;
 

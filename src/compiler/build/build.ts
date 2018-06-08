@@ -4,18 +4,16 @@ import { catchError } from '../util';
 import { copyTasks } from '../copy/copy-tasks';
 import { emptyOutputTargetDirs } from './empty-dir';
 import { getBuildContext } from './build-utils';
-import { getCompilerCtx } from './compiler-ctx';
 import { generateAppFiles } from '../app/generate-app-files';
 import { generateBundles } from '../bundle/generate-bundles';
 import { generateEntryModules } from '../entries/entry-modules';
 import { generateIndexHtmls } from '../html/generate-index-html';
 import { generateModuleMap } from '../bundle/bundle';
 import { generateStyles } from '../style/style';
+import { getCompilerCtx } from './compiler-ctx';
 import { initCollections } from '../collections/init-collections';
-import { initIndexHtmls } from '../html/init-index-html';
-import { transpileAppModules } from '../transpile/transpile-app-modules';
+import { transpileApp } from '../transpile/transpile-app';
 import { writeBuildFiles } from './write-build';
-import { _deprecatedConfigCollections } from '../collections/_deprecated-collections';
 
 
 export async function build(config: d.Config, compilerCtx?: d.CompilerCtx, watcher?: d.WatcherResults): Promise<d.BuildResults> {
@@ -24,26 +22,21 @@ export async function build(config: d.Config, compilerCtx?: d.CompilerCtx, watch
   // ctx is where stuff is cached for fast in-memory lookups later
   compilerCtx = getCompilerCtx(config, compilerCtx);
 
+  if (config.enableCache) {
+    await compilerCtx.cache.ensureCacheDir();
+  }
+
   // reset the build context, this is important for rebuilds
   const buildCtx = getBuildContext(config, compilerCtx, watcher);
 
   try {
-    // create an initial index.html file if one doesn't already exist
-    // this is synchronous on purpose
-    await initIndexHtmls(config, compilerCtx, buildCtx);
-    if (buildCtx.shouldAbort()) return buildCtx.finish();
-
     // empty the directories on the first build
     await emptyOutputTargetDirs(config, compilerCtx);
     if (buildCtx.shouldAbort()) return buildCtx.finish();
 
-    // DEPRECATED config.colllections 2018-02-13
-    await _deprecatedConfigCollections(config, compilerCtx, buildCtx);
-    if (buildCtx.shouldAbort()) return buildCtx.finish();
-
     // async scan the src directory for ts files
     // then transpile them all in one go
-    await transpileAppModules(config, compilerCtx, buildCtx);
+    await transpileApp(config, compilerCtx, buildCtx);
     if (buildCtx.shouldAbort()) return buildCtx.finish();
 
     // initialize all the collections we found when transpiling

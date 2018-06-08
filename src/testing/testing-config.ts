@@ -1,12 +1,12 @@
 import * as path from 'path';
 import * as d from '../declarations';
-import { TestingLogger } from './testing-logger';
+import { BaseLogger } from '../util/logger/base-logger';
 import { TestingSystem } from './testing-sys';
 
 
 export class TestingConfig implements d.Config {
   _isTesting = true;
-  logger = new TestingLogger();
+  logger = new BaseLogger();
   sys = new TestingSystem();
 
   namespace: string;

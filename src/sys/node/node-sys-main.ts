@@ -15,23 +15,21 @@ import * as url from 'url';
 export class NodeSystem implements d.StencilSystem {
   private packageJsonData: d.PackageJsonData;
   private distDir: string;
+  private resolveModuleCache: { [cacheKey: string]: string } = {};
   private sysUtil: any;
   private sysWorker: WorkerFarm;
   private typescriptPackageJson: d.PackageJsonData;
-  private resolveModuleCache: { [cacheKey: string]: string } = {};
 
   fs: d.FileSystem;
   path: d.Path;
 
-
-  constructor(fs?: d.FileSystem, maxConcurrentWorkers?: number) {
+  constructor(fs?: d.FileSystem) {
     this.fs = fs || new NodeFs();
     this.path = path;
 
     const rootDir = path.join(__dirname, '..', '..', '..');
     this.distDir = path.join(rootDir, 'dist');
-
-    this.sysUtil = require(path.join(this.distDir, 'sys', 'node', 'sys-util.js'));
+    this.sysUtil = require(path.join(this.distDir, 'sys', 'node', 'node-sys-util.js'));
 
     try {
       this.packageJsonData = require(path.join(rootDir, 'package.json'));
@@ -44,20 +42,13 @@ export class NodeSystem implements d.StencilSystem {
     } catch (e) {
       throw new Error(`unable to resolve "typescript" from: ${rootDir}`);
     }
-
-    if (typeof maxConcurrentWorkers !== 'number') {
-      maxConcurrentWorkers = os.cpus().length;
-    }
-
-    this.initWorkerFarm(maxConcurrentWorkers);
   }
 
-  initWorkerFarm(maxConcurrentWorkers: number) {
-    const workerModulePath = require.resolve(path.join(this.distDir, 'sys', 'node', 'sys-worker.js'));
-
-    this.sysWorker = new WorkerFarm(workerModulePath, {
-      maxConcurrentWorkers: maxConcurrentWorkers
-    });
+  startWorkers(config: d.Config) {
+    if (config.maxConcurrentWorkers > 0) {
+      const workerModulePath = require.resolve(path.join(this.distDir, 'sys', 'node', 'start-worker.js'));
+      this.sysWorker = new WorkerFarm(workerModulePath, config);
+    }
   }
 
   destroy() {
@@ -238,6 +229,10 @@ export class NodeSystem implements d.StencilSystem {
     return os.platform();
   }
 
+  get processorCores() {
+    return Math.max(os.cpus().length, 1);
+  }
+
   resolveModule(fromDir: string, moduleId: string) {
     const cacheKey = `${fromDir}:${moduleId}`;
     if (this.resolveModuleCache[cacheKey]) {
@@ -294,7 +289,16 @@ export class NodeSystem implements d.StencilSystem {
   }
 
   tmpdir() {
-    return path.join(os.tmpdir(), `stencil-${this.packageJsonData.version}`);
+    const key = `stencil-${this.packageJsonData.version}-__BUILD_ID__`;
+    return path.join(os.tmpdir(), key);
+  }
+
+  transpileFile(tsFilePath: string, tsSourceText: string) {
+    return this.sysWorker.run('transpileFile', [tsFilePath, tsSourceText]);
+  }
+
+  transpileProgram(tsFilePaths: string[]) {
+    return this.sysWorker.run('transpileProgram', [tsFilePaths], true);
   }
 
   get url() {
@@ -309,7 +313,7 @@ export class NodeSystem implements d.StencilSystem {
   }
 
   get workbox() {
-    return require('workbox-build');
+    return this.sysUtil.workboxBuild;
   }
 
 }

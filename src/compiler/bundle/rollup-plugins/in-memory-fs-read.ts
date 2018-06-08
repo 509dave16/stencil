@@ -2,8 +2,8 @@ import * as d from '../../../declarations';
 import { normalizePath } from '../../util';
 
 
-export default function inMemoryFsRead(config: d.Config, path: d.Path, compilerCtx: d.CompilerCtx) {
-  const assetsCache: d.FilesMap = {};
+export default function inMemoryFsRead(config: d.Config, compilerCtx: d.CompilerCtx) {
+  const path = config.sys.path;
   let tsFileNames: string[];
 
   return {
@@ -12,7 +12,6 @@ export default function inMemoryFsRead(config: d.Config, path: d.Path, compilerC
     async resolveId(importee: string, importer: string) {
       // note: node-resolve plugin has already ran
       // we can assume the importee is a file path
-
       const orgImportee = importee;
 
       if (!path.isAbsolute(importee)) {
@@ -92,6 +91,14 @@ export default function inMemoryFsRead(config: d.Config, path: d.Path, compilerC
             }
           }
 
+          accessData = await compilerCtx.fs.accessData(srcImportee + '.d.ts');
+          if (accessData.isFile) {
+            // this is an interface, so let's create an empty/fake js file
+            const jsFilePath = srcImportee + '.js';
+            await compilerCtx.fs.writeFile(jsFilePath, `// ${srcImportee + '.d.ts'}`);
+            return jsFilePath;
+          }
+
           break;
         }
       }
@@ -112,9 +119,9 @@ export default function inMemoryFsRead(config: d.Config, path: d.Path, compilerC
 
               // ok, we've got a potential absolute path where the file "could" be
               try {
-                // let's see if it actually exists, but with readFileSync :(
-                assetsCache[assetsFilePath] = compilerCtx.fs.readFileSync(assetsFilePath);
-                if (typeof assetsCache[assetsFilePath] === 'string') {
+                // let's see if it actually exists
+                const assetContent = await compilerCtx.fs.readFile(assetsFilePath);
+                if (typeof assetContent === 'string') {
                   return assetsFilePath;
                 }
 
@@ -129,14 +136,8 @@ export default function inMemoryFsRead(config: d.Config, path: d.Path, compilerC
       return null;
     },
 
-    async load(sourcePath: string) {
+    load(sourcePath: string) {
       sourcePath = normalizePath(sourcePath);
-
-      if (typeof assetsCache[sourcePath] === 'string') {
-        // awesome, this is one of the cached asset file we already read in resolveId
-        return assetsCache[sourcePath];
-      }
-
       return compilerCtx.fs.readFile(sourcePath);
     }
   };

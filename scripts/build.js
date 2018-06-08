@@ -8,9 +8,7 @@ const DIST_DIR = path.resolve(__dirname, '..', 'dist');
 
 fs.removeSync(DIST_DIR);
 
-
 [
-
   'build-cli.js',
   'build-compiler.js',
   'build-core.js',
@@ -18,6 +16,7 @@ fs.removeSync(DIST_DIR);
   'build-server.js',
   'build-submodules.js',
   'build-sys-node',
+  'build-sys-node-util',
   'build-testing.js'
 
 ].forEach(script => fork(path.join(SCRIPTS_DIR, script)));

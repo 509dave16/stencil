@@ -35,6 +35,7 @@ export interface StencilSystem {
   minimatch?(path: string, pattern: string, opts?: any): boolean;
   path?: Path;
   platform?: string;
+  processorCores?: number;
   resolveModule?(fromDir: string, moduleId: string): string;
   rollup?: {
     rollup: {
@@ -49,7 +50,10 @@ export interface StencilSystem {
     lt: (a: string, b: string, loose?: boolean) => boolean;
     lte: (a: string, b: string, loose?: boolean) => boolean;
   };
+  startWorkers?: (config: d.Config) => void;
   tmpdir?(): string;
+  transpileFile?: (tsFilePath: string, tsSourceText: string) => Promise<d.TranspileFileResults>;
+  transpileProgram?: (tsFilePaths: string[]) => Promise<d.TranspileProgramResults>;
   url?: {
     parse(urlStr: string, parseQueryString?: boolean, slashesDenoteHost?: boolean): Url;
     format(url: Url): string;

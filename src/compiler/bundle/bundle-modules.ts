@@ -1,11 +1,11 @@
-import { BuildCtx, CompilerCtx, Config, EntryModule, JSModuleMap } from '../../declarations';
+import * as d from '../../declarations';
 import { catchError } from '../util';
 import { createBundle, writeEsModules, writeEsmEs5Modules, writeLegacyModules  } from './rollup-bundle';
 import { minifyJs } from '../minifier';
 
 
-export async function generateBundleModules(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx, entryModules: EntryModule[]): Promise<JSModuleMap> {
-  const results: JSModuleMap = {
+export async function generateBundleModules(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, entryModules: d.EntryModule[]) {
+  const jsModuleMap: d.JSModuleMap = {
     esm: {},
     es5: {},
     esmEs5: {}
@@ -13,7 +13,7 @@ export async function generateBundleModules(config: Config, compilerCtx: Compile
 
   if (entryModules.length === 0) {
     // no entry modules, so don't bother
-    return results;
+    return jsModuleMap;
   }
 
   try {
@@ -22,39 +22,39 @@ export async function generateBundleModules(config: Config, compilerCtx: Compile
     const rollupBundle = await createBundle(config, compilerCtx, buildCtx, entryModules);
     if (buildCtx.shouldAbort()) {
       // rollup errored, so let's not continue
-      return results;
+      return jsModuleMap;
     }
 
     // bundle using only es modules and dynamic imports
-    results.esm = await writeEsModules(config, rollupBundle);
+    jsModuleMap.esm = await writeEsModules(config, rollupBundle);
 
-    buildCtx.bundleBuildCount = Object.keys(results.esm).length;
+    buildCtx.bundleBuildCount = Object.keys(jsModuleMap.esm).length;
 
     if (config.buildEs5) {
       // only create legacy modules when generating es5 fallbacks
       // bundle using commonjs using jsonp callback
-      results.es5 = await writeLegacyModules(config, rollupBundle, entryModules);
+      jsModuleMap.es5 = await writeLegacyModules(config, rollupBundle, entryModules);
     }
 
     if (config.outputTargets.some(o => o.type === 'dist')) {
-      results.esmEs5 = await writeEsmEs5Modules(config, rollupBundle);
+      jsModuleMap.esmEs5 = await writeEsmEs5Modules(config, rollupBundle);
     }
 
     if (config.minifyJs) {
-      await minifyChunks(config, compilerCtx, buildCtx, results);
+      await minifyChunks(config, compilerCtx, buildCtx, jsModuleMap);
     }
 
   } catch (err) {
     catchError(buildCtx.diagnostics, err);
   }
 
-  return results;
+  return jsModuleMap;
 }
 
 
-async function minifyChunks(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx, results: JSModuleMap) {
-  const promises = Object.keys(results).map((moduleType: 'esm' | 'es5' | 'esmEs5') => {
-    const jsModuleList = results[moduleType];
+async function minifyChunks(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, jsModuleMap: d.JSModuleMap) {
+  const promises = Object.keys(jsModuleMap).map((moduleType: 'esm' | 'es5' | 'esmEs5') => {
+    const jsModuleList = jsModuleMap[moduleType];
 
     const promises = Object.keys(jsModuleList)
       .filter(m => !m.startsWith('entry:'))

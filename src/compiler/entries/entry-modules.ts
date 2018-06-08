@@ -8,6 +8,8 @@ import { validateComponentTag } from '../config/validate-component';
 
 
 export function generateEntryModules(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx) {
+  const timeSpan = config.logger.createTimeSpan(`generateEntryModules started`, true);
+
   buildCtx.entryModules = [];
 
   // figure out all the actual import paths (basically which extension each import uses)
@@ -41,6 +43,8 @@ export function generateEntryModules(config: Config, compilerCtx: CompilerCtx, b
   } catch (e) {
     catchError(buildCtx.diagnostics, e);
   }
+
+  timeSpan.finish(`generateEntryModules finished`);
 
   return buildCtx.entryModules;
 }

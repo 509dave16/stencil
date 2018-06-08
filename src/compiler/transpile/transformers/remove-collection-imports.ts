@@ -1,8 +1,7 @@
-import * as d from '../../../declarations';
 import * as ts from 'typescript';
 
 
-export function removeCollectionImports(compilerCtx: d.CompilerCtx): ts.TransformerFactory<ts.SourceFile> {
+export function removeCollectionImports(collectionNames: string[]): ts.TransformerFactory<ts.SourceFile> {
   /*
 
     // remove side effect collection imports like:
@@ -24,8 +23,8 @@ export function removeCollectionImports(compilerCtx: d.CompilerCtx): ts.Transfor
         const moduleImport = importNode.moduleSpecifier.text;
 
         // test if this side effect import is a collection
-        const isCollectionImport = compilerCtx.collections.some(c => {
-          return c.collectionName === moduleImport;
+        const isCollectionImport = collectionNames.some(collectionName => {
+          return collectionName === moduleImport;
         });
 
         if (isCollectionImport) {

@@ -7,5 +7,6 @@ export interface Cache {
   commit(): Promise<void>;
   clear(): void;
   clearDiskCache(): Promise<void>;
+  ensureCacheDir(): Promise<void>;
   getMemoryStats(): string;
 }

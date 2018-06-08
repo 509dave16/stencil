@@ -1,16 +1,5 @@
-import { ChildProcess, ForkOptions } from "child_process";
-import { WorkerFarm } from "./main";
 
-
-export interface WorkerOptions {
-  maxConcurrentWorkers?: number;
-  maxConcurrentTasksPerWorker?: number;
-  maxTaskTime?: number;
-  forkOptions?: ForkOptions;
-  forcedKillTime?: number;
-}
-
-export interface Task {
+export interface WorkerTask {
   taskId?: number;
   methodName: string;
   args: any[];
@@ -20,18 +9,18 @@ export interface Task {
   timer?: any;
 }
 
-export interface Worker {
+export interface WorkerProcess {
   workerId: number;
   taskIds: number;
-  send?(msg: MessageData): void;
+  send?(msg: WorkerMessageData): void;
   kill?(signal?: string): void;
-  tasks?: Task[];
+  tasks?: WorkerTask[];
   totalTasksAssigned?: number;
   exitCode?: number;
   isExisting?: boolean;
 }
 
-export interface MessageData {
+export interface WorkerMessageData {
   workerId?: number;
   taskId?: number;
   modulePath?: string;
@@ -40,10 +29,11 @@ export interface MessageData {
   value?: any;
   exitProcess?: boolean;
   error?: {
-    type?: string;
     message?: string;
     stack?: string;
-  }
+    type?: string;
+    name?: string;
+  };
 }
 
-export type Runner = (methodName: string, args: any[]) => Promise<any>;
+export type WorkerRunner = (methodName: string, args: any[]) => Promise<any>;

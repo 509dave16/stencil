@@ -14,6 +14,8 @@ import resolveCollections from './rollup-plugins/resolve-collections';
 
 
 export async function createBundle(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx, entryModules: EntryModule[]) {
+  const timeSpan = config.logger.createTimeSpan(`createBundle started`, true);
+
   const builtins = require('rollup-plugin-node-builtins');
   const globals = require('rollup-plugin-node-globals');
   let rollupBundle: BundleSet;
@@ -43,7 +45,7 @@ export async function createBundle(config: Config, compilerCtx: CompilerCtx, bui
       globals(),
       builtins(),
       bundleEntryFile(config, entryModules),
-      inMemoryFsRead(config, config.sys.path, compilerCtx),
+      inMemoryFsRead(config, compilerCtx),
       await pathsResolution(config, compilerCtx),
       localResolution(config, compilerCtx),
       nodeEnvVars(config),
@@ -56,9 +58,10 @@ export async function createBundle(config: Config, compilerCtx: CompilerCtx, bui
     rollupBundle = await rollup(rollupConfig);
 
   } catch (err) {
-    console.log(err);
     loadRollupDiagnostics(config, compilerCtx, buildCtx, err);
   }
+
+  timeSpan.finish(`createBundle finished`);
 
   return rollupBundle;
 }

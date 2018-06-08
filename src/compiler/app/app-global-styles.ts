@@ -7,7 +7,6 @@ import { runPluginTransforms } from '../plugin/plugin';
 
 export async function generateGlobalStyles(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, outputTarget: d.OutputTargetWww) {
   if (typeof config.globalStyle !== 'string') {
-    config.logger.debug(`"config.globalStyle" not found`);
     return;
   }
 

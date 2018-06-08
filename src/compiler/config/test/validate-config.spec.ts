@@ -20,6 +20,26 @@ describe('validation', () => {
   });
 
 
+  describe('workers', () => {
+
+    it('default maxConcurrentWorkers', () => {
+      validateConfig(config);
+      expect(config.maxConcurrentWorkers).toBeGreaterThan(0);
+    });
+
+    it('default maxTaskTime', () => {
+      validateConfig(config);
+      expect(config.maxTaskTime).toBe(90000);
+    });
+
+    it('default maxConcurrentTasksPerWorker', () => {
+      validateConfig(config);
+      expect(config.maxConcurrentTasksPerWorker).toBe(5);
+    });
+
+  });
+
+
   describe('enableCache', () => {
 
     it('set enableCache true', () => {

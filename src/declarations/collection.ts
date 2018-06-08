@@ -51,6 +51,8 @@ export interface ModuleFile {
   isCollectionDependency?: boolean;
   excludeFromCollection?: boolean;
   originalCollectionComponentPath?: string;
+  externalImports?: string[];
+  localImports?: string[];
 }
 
 

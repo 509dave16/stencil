@@ -19,9 +19,11 @@ if (success) {
     rollup.rollup({
       input: ENTRY_FILE,
       external: [
+        'chalk',
+        'child_process',
         'fs',
         'path',
-        'chalk'
+        'typescript'
       ],
       plugins: [
         rollupResolve()

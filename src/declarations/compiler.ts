@@ -18,7 +18,7 @@ export interface CompilerCtx {
     registryJson?: string;
   };
   appCoreWWWPath?: string;
-  resolvedCollections?: string[];
+  resolvedCollections?: { [moduleId: string]: d.PackageJsonData };
 
   lastBuildHadError?: boolean;
   lastBuildConditionalsBrowserEsm?: d.BuildConditionals;
@@ -27,4 +27,5 @@ export interface CompilerCtx {
   hasSuccessfulBuild?: boolean;
   localPrerenderServer?: any;
   hasWatcher?: boolean;
+  tsconfig?: any;
 }

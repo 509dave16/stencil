@@ -27,6 +27,9 @@ export interface Config {
   includeSrc?: string[];
   logger?: d.Logger;
   logLevel?: 'error'|'warn'|'info'|'debug'|string;
+  maxConcurrentWorkers?: number;
+  maxConcurrentTasksPerWorker?: number;
+  maxTaskTime?: number;
   minifyCss?: boolean;
   minifyJs?: boolean;
   namespace?: string;
@@ -44,11 +47,6 @@ export interface Config {
   writeLog?: boolean;
   _isValidated?: boolean;
   _isTesting?: boolean;
-
-  /**
-   * DEPRECATED "config.collections" since 0.6.0, 2018-02-13
-   */
-  _deprecatedCollections?: ConfigCollection[];
 }
 
 
@@ -155,11 +153,6 @@ export interface ConfigAssetVersioning {
 
 export interface ConfigBundle {
   components: string[];
-}
-
-
-export interface ConfigCollection {
-  name: string;
 }
 
 

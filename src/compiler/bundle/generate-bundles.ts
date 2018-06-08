@@ -13,10 +13,30 @@ export async function generateBundles(config: d.Config, compilerCtx: d.CompilerC
   // generate the actual files to write
   const timeSpan = config.logger.createTimeSpan(`generate bundles started`);
 
+  const bundleKeys = await generateBundleKeys(config, compilerCtx, buildCtx, entryModules, jsModules);
+
+  await Promise.all([
+    genereateBrowserEsm(config, compilerCtx, jsModules, bundleKeys),
+    genereateBrowserEs5(config, compilerCtx, buildCtx, jsModules, bundleKeys),
+    genereateEsmEs5(config, compilerCtx, buildCtx, jsModules, bundleKeys)
+  ]);
+
+  // create the registry of all the components
+  const cmpRegistry = createComponentRegistry(entryModules);
+
+  timeSpan.finish(`generate bundles finished`);
+
+  return cmpRegistry;
+}
+
+
+async function generateBundleKeys(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, entryModules: d.EntryModule[], jsModules: d.JSModuleMap) {
   const bundleKeys: { [key: string]: string } = {};
 
+  const timeSpan = config.logger.createTimeSpan(`generateBundleKeys started`, true);
+
   await Promise.all(
-    entryModules.map(async entryModule => {
+    entryModules.map(entryModule => {
       const bundleKeyPath = `${entryModule.entryKey}.js`;
       bundleKeys[bundleKeyPath] = entryModule.entryKey;
       entryModule.modeNames = entryModule.modeNames || [];
@@ -41,20 +61,10 @@ export async function generateBundles(config: d.Config, compilerCtx: d.CompilerC
       );
     })
   );
-  config.logger.debug(`bundle mode finished`);
 
-  await Promise.all([
-    genereateBrowserEsm(config, compilerCtx, jsModules, bundleKeys),
-    genereateBrowserEs5(config, compilerCtx, buildCtx, jsModules, bundleKeys),
-    genereateEsmEs5(config, compilerCtx, buildCtx, jsModules, bundleKeys)
-  ]);
+  timeSpan.finish(`generateBundleKeys finished`);
 
-  // create the registry of all the components
-  const cmpRegistry = createComponentRegistry(entryModules);
-
-  timeSpan.finish(`generate bundles finished`);
-
-  return cmpRegistry;
+  return bundleKeys;
 }
 
 
@@ -71,8 +81,6 @@ async function genereateBrowserEsm(config: d.Config, compilerCtx: d.CompilerCtx,
     });
 
   await Promise.all(esmPromises);
-
-  config.logger.debug(`generate esm finished`);
 }
 
 

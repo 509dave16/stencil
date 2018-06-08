@@ -1,7 +1,6 @@
 import { Chalk } from 'chalk';
 import * as d from '../../declarations';
 import * as fs from 'fs';
-import * as path from 'path';
 
 
 export class NodeLogger implements d.Logger {
@@ -10,11 +9,7 @@ export class NodeLogger implements d.Logger {
   private writeLogQueue: string[] = [];
   buildLogFilePath: string = null;
 
-  constructor() {
-    const rootDir = path.join(__dirname, '..', '..', '..');
-    const distDir = path.join(rootDir, 'dist');
-    const sysUtil = require(path.join(distDir, 'sys', 'node', 'sys-util.js'));
-
+  constructor(sysUtil: any) {
     this.chalk = sysUtil.chalk;
   }
 
@@ -126,6 +121,7 @@ export class NodeLogger implements d.Logger {
 
     if (debug) {
       if (this.shouldLog('debug')) {
+        msg.push(this.dim(` MEM: ${(process.memoryUsage().rss / 1000000).toFixed(1)}MB`));
         const lines = wordWrap(msg, getColumns());
         this.debugPrefix(lines);
         console.log(lines.join('\n'));
@@ -154,6 +150,7 @@ export class NodeLogger implements d.Logger {
 
     if (debug) {
       if (this.shouldLog('debug')) {
+        msg += this.dim(` MEM: ${(process.memoryUsage().rss / 1000000).toFixed(1)}MB`);
         const lines = wordWrap([msg], getColumns());
         this.debugPrefix(lines);
         console.log(lines.join('\n'));

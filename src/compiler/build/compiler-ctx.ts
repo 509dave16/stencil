@@ -13,7 +13,7 @@ export function getCompilerCtx(config: d.Config, compilerCtx?: d.CompilerCtx) {
   compilerCtx.appFiles = compilerCtx.appFiles || {};
   compilerCtx.moduleFiles = compilerCtx.moduleFiles || {};
   compilerCtx.collections = compilerCtx.collections || [];
-  compilerCtx.resolvedCollections = compilerCtx.resolvedCollections || [];
+  compilerCtx.resolvedCollections = compilerCtx.resolvedCollections || {};
   compilerCtx.compiledModuleJsText = compilerCtx.compiledModuleJsText || {};
   compilerCtx.compiledModuleLegacyJsText = compilerCtx.compiledModuleLegacyJsText || {};
 
@@ -31,9 +31,10 @@ export function resetCompilerCtx(compilerCtx: d.CompilerCtx) {
   compilerCtx.appFiles = {};
   compilerCtx.moduleFiles = {};
   compilerCtx.collections.length = 0;
-  compilerCtx.resolvedCollections.length = 0;
+  compilerCtx.resolvedCollections = {};
   compilerCtx.compiledModuleJsText = {};
   compilerCtx.compiledModuleLegacyJsText = {};
+  compilerCtx.tsconfig = null;
 
   // do NOT reset 'hasSuccessfulBuild'
 }

@@ -2,7 +2,7 @@ import * as d from '../../declarations';
 import { angularDirectiveProxyOutputs } from '../distribution/dist-angular';
 import { appendDefineCustomElementsType } from '../distribution/dist-esm';
 import { captializeFirstLetter, dashToPascalCase } from '../../util/helpers';
-import { gatherMetadata } from './datacollection/index';
+import { gatherProgramMetadata } from './datacollection/index';
 import { getComponentsDtsTypesFilePath } from '../distribution/distribution';
 import { MEMBER_TYPE } from '../../util/constants';
 import { normalizeAssetsDir } from '../component-plugins/assets-plugin';
@@ -11,13 +11,10 @@ import { normalizeStyles } from '../style/normalize-styles';
 import * as ts from 'typescript';
 
 
-export async function generateComponentTypes(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, tsOptions: ts.CompilerOptions, tsHost: ts.CompilerHost, tsFilePaths: string[], componentsDtsSrcFilePath: string) {
+export async function generateComponentTypes(config: d.Config, compilerCtx: d.CompilerCtx, diagnostics: d.Diagnostic[], tsOptions: ts.CompilerOptions, tsHost: ts.CompilerHost, tsFilePaths: string[], componentsDtsSrcFilePath: string) {
   // get all of the ts files paths to transpile
   // ensure the components.d.ts file is always excluded from this transpile program
   const checkProgramTsFiles = tsFilePaths.filter(filePath => filePath !== componentsDtsSrcFilePath);
-
-  // keep track of how many files we transpiled (great for debugging/testing)
-  buildCtx.transpileBuildCount = checkProgramTsFiles.length;
 
   // run the first program that only does the checking
   const checkProgram = ts.createProgram(checkProgramTsFiles, tsOptions, tsHost);
@@ -26,12 +23,17 @@ export async function generateComponentTypes(config: d.Config, compilerCtx: d.Co
   // let's filter them, we only want to gather metadata from .ts/.tsx files in project's src
   const sourceFiles = checkProgram.getSourceFiles().filter(sf => checkProgramTsFiles.includes(sf.fileName));
 
+  const externalImports: string[] = [];
+  const localImports: string[] = [];
+  const collectionNames: string[] = [];
+
   // gather component metadata and type info
-  const metadata = gatherMetadata(
+  const metadata = gatherProgramMetadata(
     config,
-    compilerCtx,
-    buildCtx.diagnostics,
-    buildCtx.collections,
+    diagnostics,
+    externalImports,
+    localImports,
+    collectionNames,
     checkProgram.getTypeChecker(),
     sourceFiles
   );
@@ -73,7 +75,10 @@ export async function generateComponentTypes(config: d.Config, compilerCtx: d.Co
     await compilerCtx.fs.writeFile(typesFile, componentTypesFileContent);
   }));
 
-  return checkProgram;
+  return {
+    checkProgram,
+    collectionNames
+  };
 }
 
 

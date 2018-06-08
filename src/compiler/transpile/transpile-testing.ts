@@ -1,6 +1,6 @@
 import * as d from '../../declarations';
 import addComponentMetadata from './transformers/add-component-metadata';
-import { gatherMetadata } from './datacollection/index';
+import { gatherProgramMetadata } from './datacollection/index';
 import { loadTypeScriptDiagnostics } from '../../util/logger/logger-typescript';
 import { normalizeAssetsDir } from '../component-plugins/assets-plugin';
 import { normalizeStyles } from '../style/normalize-styles';
@@ -16,8 +16,9 @@ import * as ts from 'typescript';
 export function transpileModuleForTesting(config: d.Config, compilerOptions: ts.CompilerOptions, path: string, input: string) {
   const moduleFiles: d.ModuleFiles = {};
   const diagnostics: d.Diagnostic[] = [];
-  const compilerCtx: d.CompilerCtx = null;
-  const collections: d.Collection[] = [];
+  const externalImports: string[] = [];
+  const localImports: string[] = [];
+  const collectionNames: string[] = [];
   const results: d.TranspileResults = {
     code: null,
     diagnostics: [],
@@ -28,7 +29,7 @@ export function transpileModuleForTesting(config: d.Config, compilerOptions: ts.
 
   // Gather component metadata and type info
   const files = checkProgram.getSourceFiles().filter(sf => sf.getSourceFile().fileName === path);
-  const metadata = gatherMetadata(config, compilerCtx, diagnostics, collections, checkProgram.getTypeChecker(), files);
+  const metadata = gatherProgramMetadata(config, diagnostics, externalImports, localImports, collectionNames, checkProgram.getTypeChecker(), files);
 
   if (Object.keys(metadata).length > 0) {
     const fileMetadata = metadata[path];

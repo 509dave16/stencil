@@ -4,7 +4,7 @@ import { cleanDiagnostics } from '../../util/logger/logger-util';
 import { generateReadmes } from './generate-readmes';
 import { getBuildContext } from '../build/build-utils';
 import { getCompilerCtx } from '../build/compiler-ctx';
-import { transpileAppModules } from '../transpile/transpile-app-modules';
+import { transpileApp } from '../transpile/transpile-app';
 
 
 export async function docs(config: d.Config, compilerCtx: d.CompilerCtx) {
@@ -20,7 +20,7 @@ export async function docs(config: d.Config, compilerCtx: d.CompilerCtx) {
     // begin the build
     // async scan the src directory for ts files
     // then transpile them all in one go
-    await transpileAppModules(config, compilerCtx, buildCtx);
+    await transpileApp(config, compilerCtx, buildCtx);
 
     // generate each of the docs
     await generateDocs(config, compilerCtx);

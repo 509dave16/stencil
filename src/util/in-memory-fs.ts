@@ -148,6 +148,15 @@ export class InMemoryFileSystem implements d.InMemoryFileSystem {
     item.queueDeleteFromDisk = false;
   }
 
+  async ensureDir(dirPath: string) {
+    const item = this.getItem(dirPath);
+
+    item.isFile = false;
+    item.isDirectory = true;
+    item.queueWriteToDisk = true;
+    item.queueDeleteFromDisk = false;
+  }
+
   async readdir(dirPath: string, opts: d.FsReaddirOptions = {}) {
     dirPath = normalizePath(dirPath);
 
@@ -725,5 +734,3 @@ const IGNORE = [
 // and anything larger is probably a REALLY large file and a rare case
 // which we don't need to eat up memory for
 const MAX_TEXT_CACHE = 5242880;
-
-export const IN_MEMORY_DIR = '__tmp__in__memory__';

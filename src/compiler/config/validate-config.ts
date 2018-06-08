@@ -113,6 +113,10 @@ export function validateConfig(config: Config, setEnvVariables?: boolean) {
     config.excludeSrc = DEFAULT_EXCLUDES.slice();
   }
 
+  setNumberConfig(config, 'maxTaskTime', null, 90000);
+  setNumberConfig(config, 'maxConcurrentTasksPerWorker', null, 5);
+  setNumberConfig(config, 'maxConcurrentWorkers', null, config.sys.processorCores);
+
   /**
    * DEPRECATED "config.collections" since 0.6.0, 2018-02-13
    */

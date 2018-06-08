@@ -1,16 +1,16 @@
 import * as d from '../../declarations';
-import { IN_MEMORY_DIR } from '../../util/in-memory-fs';
-import { normalizePath, pathJoin } from '../util';
 import * as ts from 'typescript';
 
 
 export async function getUserTsConfig(config: d.Config, compilerCtx: d.CompilerCtx) {
+  if (compilerCtx.tsconfig) {
+    return compilerCtx.tsconfig as ts.CompilerOptions;
+  }
+
   let compilerOptions: ts.CompilerOptions = Object.assign({}, DEFAULT_COMPILER_OPTIONS);
 
   try {
-    const normalizedConfigPath = normalizePath(config.tsconfig);
-
-    const sourceText = await compilerCtx.fs.readFile(normalizedConfigPath);
+    const sourceText = await compilerCtx.fs.readFile(config.tsconfig);
 
     try {
       const sourceJson = JSON.parse(sourceText);
@@ -37,9 +37,8 @@ export async function getUserTsConfig(config: d.Config, compilerCtx: d.CompilerC
   const collectionOutputTarget = (config.outputTargets as d.OutputTargetDist[]).find(o => !!o.collectionDir);
   if (collectionOutputTarget) {
     compilerOptions.outDir = collectionOutputTarget.collectionDir;
-
   } else {
-    compilerOptions.outDir = pathJoin(config, config.rootDir, IN_MEMORY_DIR);
+    compilerOptions.outDir = undefined;
   }
 
 
@@ -54,6 +53,8 @@ export async function getUserTsConfig(config: d.Config, compilerCtx: d.CompilerC
   }
 
   validateCompilerOptions(compilerOptions);
+
+  compilerCtx.tsconfig = compilerOptions;
 
   return compilerOptions;
 }

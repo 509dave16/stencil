@@ -21,6 +21,7 @@ if (success) {
     rollup.rollup({
       input: ENTRY_FILE,
       external: [
+        'child_process',
         'fs',
         'path',
         'rollup',

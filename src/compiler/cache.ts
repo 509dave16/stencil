@@ -84,6 +84,11 @@ export class Cache implements d.Cache {
     await this.cacheFs.commit();
   }
 
+  async ensureCacheDir() {
+    await this.cacheFs.ensureDir(this.tmpDir);
+    await this.cacheFs.commit();
+  }
+
   private getCacheFilePath(key: string) {
     return this.config.sys.path.join(this.tmpDir, key);
   }
@@ -95,4 +100,4 @@ export class Cache implements d.Cache {
 }
 
 
-const MAX_FAILED = 20;
+const MAX_FAILED = 30;
